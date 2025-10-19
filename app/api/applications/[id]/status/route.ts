@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireRole } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth'
 import { updateApplicationStatusSchema } from '@/lib/validations'
 import { UserRole } from '@prisma/client'
 
-export const PUT = requireRole([UserRole.professor])(async (request: NextRequest, user) => {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const user = await getCurrentUser(request)
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  }
+  if (user.role !== UserRole.professor) {
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+  }
   try {
-    const { params } = await import('./route')
     const body = await request.json()
     const validatedData = updateApplicationStatusSchema.parse(body)
 
@@ -110,4 +119,4 @@ export const PUT = requireRole([UserRole.professor])(async (request: NextRequest
       { status: 500 }
     )
   }
-})
+}

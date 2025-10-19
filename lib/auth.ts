@@ -5,6 +5,8 @@ import { cookies } from 'next/headers'
 import { prisma } from './db'
 import { User, UserRole } from '@prisma/client'
 
+export type SafeUser = Omit<User, 'password'>
+
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret'
 
 export interface JWTPayload {
@@ -47,7 +49,7 @@ export function getTokenFromRequest(request: NextRequest): string | null {
   return authHeader.replace('Bearer ', '')
 }
 
-export async function getCurrentUser(request: NextRequest): Promise<User | null> {
+export async function getCurrentUser(request: NextRequest): Promise<SafeUser | null> {
   const token = getTokenFromRequest(request)
   if (!token) return null
 
@@ -79,7 +81,7 @@ export async function getCurrentUser(request: NextRequest): Promise<User | null>
   }
 }
 
-export function requireAuth(handler: (request: NextRequest, user: User) => Promise<Response>) {
+export function requireAuth(handler: (request: NextRequest, user: SafeUser) => Promise<Response>) {
   return async (request: NextRequest) => {
     const user = await getCurrentUser(request)
     if (!user) {
@@ -90,7 +92,7 @@ export function requireAuth(handler: (request: NextRequest, user: User) => Promi
 }
 
 export function requireRole(roles: UserRole[]) {
-  return (handler: (request: NextRequest, user: User) => Promise<Response>) => {
+  return (handler: (request: NextRequest, user: SafeUser) => Promise<Response>) => {
     return async (request: NextRequest) => {
       const user = await getCurrentUser(request)
       if (!user) {
@@ -105,7 +107,7 @@ export function requireRole(roles: UserRole[]) {
 }
 
 // Server-side auth function for server components
-export async function getCurrentUserFromCookies(): Promise<User | null> {
+export async function getCurrentUserFromCookies(): Promise<SafeUser | null> {
   try {
     const cookieStore = cookies()
     const token = cookieStore.get('auth-token')?.value

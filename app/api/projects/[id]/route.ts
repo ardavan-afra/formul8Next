@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { getCurrentUser, requireAuth, requireRole } from '@/lib/auth'
+import { getCurrentUser, requireAuth } from '@/lib/auth'
 import { createProjectSchema, updateProjectSchema } from '@/lib/validations'
 import { UserRole } from '@prisma/client'
 
@@ -60,56 +60,18 @@ export async function GET(
   }
 }
 
-export const POST = requireRole([UserRole.professor])(async (request: NextRequest, user) => {
-  try {
-    const body = await request.json()
-    const validatedData = createProjectSchema.parse(body)
-
-    // Create project with materials
-    const project = await prisma.project.create({
-      data: {
-        ...validatedData,
-        professorId: user.id,
-        materials: {
-          create: validatedData.materials || []
-        }
-      },
-      include: {
-        professor: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            department: true
-          }
-        },
-        materials: true
-      }
-    })
-
-    return NextResponse.json({
-      success: true,
-      data: { project }
-    }, { status: 201 })
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
-      )
-    }
-
-    console.error('Create project error:', error)
-    return NextResponse.json(
-      { error: 'Server error' },
-      { status: 500 }
-    )
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const user = await getCurrentUser(request)
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
   }
-})
-
-export const PUT = requireRole([UserRole.professor])(async (request: NextRequest, user) => {
+  if (user.role !== UserRole.professor) {
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+  }
   try {
-    const { params } = await import('./route')
     const body = await request.json()
     const validatedData = updateProjectSchema.parse(body)
 
@@ -132,10 +94,29 @@ export const PUT = requireRole([UserRole.professor])(async (request: NextRequest
       )
     }
 
+    // Extract nested objects for separate handling
+    const { requirements, materials, ...projectData } = validatedData
+
     // Update project
     const project = await prisma.project.update({
       where: { id: params.id },
-      data: validatedData,
+      data: {
+        ...projectData,
+        ...(requirements && {
+          requirements: {
+            upsert: {
+              create: requirements,
+              update: requirements
+            }
+          }
+        }),
+        ...(materials && {
+          materials: {
+            deleteMany: {},
+            create: materials
+          }
+        })
+      },
       include: {
         professor: {
           select: {
@@ -167,11 +148,20 @@ export const PUT = requireRole([UserRole.professor])(async (request: NextRequest
       { status: 500 }
     )
   }
-})
+}
 
-export const DELETE = requireRole([UserRole.professor])(async (request: NextRequest, user) => {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const user = await getCurrentUser(request)
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  }
+  if (user.role !== UserRole.professor) {
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+  }
   try {
-    const { params } = await import('./route')
 
     // Check if project exists and user owns it
     const existingProject = await prisma.project.findUnique({
@@ -208,4 +198,4 @@ export const DELETE = requireRole([UserRole.professor])(async (request: NextRequ
       { status: 500 }
     )
   }
-})
+}
