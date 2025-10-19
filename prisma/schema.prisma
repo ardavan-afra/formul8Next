@@ -1,0 +1,155 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  professor
+  student
+}
+
+enum AcademicYear {
+  Freshman
+  Sophomore
+  Junior
+  Senior
+  Graduate
+}
+
+enum ProjectStatus {
+  active
+  paused
+  completed
+  cancelled
+}
+
+enum CompensationType {
+  unpaid
+  stipend
+  course_credit
+  hourly
+}
+
+enum MaterialType {
+  document
+  image
+  video
+  link
+  other
+}
+
+enum ApplicationStatus {
+  pending
+  accepted
+  rejected
+  withdrawn
+}
+
+model User {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  email       String   @unique
+  password    String
+  role        UserRole
+  department  String
+  bio         String?
+  skills      String[]
+  interests   String[]
+  gpa         Float?
+  year        AcademicYear?
+  avatar      String?  @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  projectsCreated    Project[]
+  applicationsSent   Application[] @relation("ApplicationsSent")
+  applicationsReceived Application[] @relation("ApplicationsReceived")
+
+  @@map("users")
+}
+
+model Project {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  title               String
+  description         String
+  professorId         String   @db.ObjectId
+  department          String
+  skills              String[]
+  requirements        ProjectRequirements?
+  duration            String
+  timeCommitment      String
+  compensation        CompensationType @default(unpaid)
+  compensationAmount  String?
+  status              ProjectStatus @default(active)
+  maxStudents         Int      @default(1)
+  currentStudents     Int      @default(0)
+  materials           Material[]
+  tags                String[]
+  applicationDeadline DateTime?
+  startDate           DateTime?
+  endDate             DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  professor    User           @relation(fields: [professorId], references: [id])
+  applications Application[]
+
+  @@index([title, description, department, skills, tags], map: "project_search_index")
+  @@map("projects")
+}
+
+model ProjectRequirements {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  projectId    String   @unique @db.ObjectId
+  gpa          Float?
+  year         AcademicYear[]
+  prerequisites String[]
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_requirements")
+}
+
+model Material {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  projectId   String      @db.ObjectId
+  name        String
+  type        MaterialType
+  url         String
+  description String?
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("materials")
+}
+
+model Application {
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  studentId         String            @db.ObjectId
+  projectId         String            @db.ObjectId
+  professorId       String            @db.ObjectId
+  coverLetter       String
+  relevantExperience String?
+  motivation        String
+  status            ApplicationStatus  @default(pending)
+  professorNotes    String?
+  applicationDate   DateTime          @default(now())
+  responseDate      DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  student   User    @relation("ApplicationsSent", fields: [studentId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id])
+  professor User    @relation("ApplicationsReceived", fields: [professorId], references: [id])
+
+  @@unique([studentId, projectId])
+  @@map("applications")
+}
