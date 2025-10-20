@@ -12,7 +12,18 @@
       "skipFiles": ["<node_internals>/**"],
       "env": {
         "NODE_OPTIONS": "--inspect"
-      }
+      },
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/.next/**/*.js"
+      ],
+      "restart": true,
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect"]
     },
     {
       "name": "Next.js: debug client-side",
@@ -56,6 +67,27 @@
       "env": {
         "NODE_OPTIONS": "--inspect"
       },
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/.next/**/*.js"
+      ],
+      "restart": true,
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect"]
+    },
+    {
+      "name": "Debug with Attach",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "restart": true,
+      "localRoot": "${workspaceFolder}",
+      "remoteRoot": "${workspaceFolder}",
+      "skipFiles": ["<node_internals>/**"],
       "resolveSourceMapLocations": [
         "${workspaceFolder}/**",
         "!**/node_modules/**"
