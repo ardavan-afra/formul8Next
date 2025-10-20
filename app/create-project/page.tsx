@@ -45,15 +45,40 @@ export default function CreateProjectPage() {
     description: ''
   })
 
-  const createProjectMutation = useMutation(
-    (projectData: any) => fetch('/api/projects', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify(projectData)
-    }).then(res => res.json()),
+  const createProjectMutation = useMutation<any, Error, any>(
+    async (projectData: any) => {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(projectData)
+      })
+
+      let data: any = null
+      try {
+        data = await response.json()
+      } catch {
+        // Ignore JSON parse errors so we can still surface the status text.
+      }
+
+      if (!response.ok) {
+        const message =
+          (data && typeof data === 'object' && 'error' in data && typeof (data as any).error === 'string'
+            ? (data as any).error
+            : null) ||
+          (data && typeof data === 'object' && 'message' in data && typeof (data as any).message === 'string'
+            ? (data as any).message
+            : null) ||
+          response.statusText ||
+          'Failed to create project'
+
+        throw new Error(message)
+      }
+
+      return data
+    },
     {
       onSuccess: () => {
         queryClient.invalidateQueries('projects')
@@ -647,9 +672,9 @@ export default function CreateProjectPage() {
 
             {/* Submit */}
             <div className="card">
-              {createProjectMutation.error && (
+              {createProjectMutation.isError && (
                 <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4">
-                  {createProjectMutation.error.response?.data?.message || 'Failed to create project'}
+                  {createProjectMutation.error?.message || 'Failed to create project'}
                 </div>
               )}
 
