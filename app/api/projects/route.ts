@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
     }
 
     const validatedFilters = projectFiltersSchema.parse(filters)
+    const page = validatedFilters.page ?? 1
+    const limit = validatedFilters.limit ?? 10
 
     // Build query
     let where: any = {}
@@ -64,20 +66,20 @@ export async function GET(request: NextRequest) {
           requirements: true
         },
         orderBy: { createdAt: 'desc' },
-        skip: (validatedFilters.page - 1) * validatedFilters.limit,
-        take: validatedFilters.limit
+        skip: (page - 1) * limit,
+        take: limit
       }),
       prisma.project.count({ where })
     ])
 
-    const totalPages = Math.ceil(total / validatedFilters.limit)
+    const totalPages = Math.ceil(total / limit)
 
     return NextResponse.json({
       success: true,
       data: {
         projects,
         totalPages,
-        currentPage: validatedFilters.page,
+        currentPage: page,
         total
       }
     })
