@@ -12,18 +12,7 @@
       "skipFiles": ["<node_internals>/**"],
       "env": {
         "NODE_OPTIONS": "--inspect"
-      },
-      "resolveSourceMapLocations": [
-        "${workspaceFolder}/**",
-        "!**/node_modules/**"
-      ],
-      "sourceMaps": true,
-      "outFiles": [
-        "${workspaceFolder}/.next/**/*.js"
-      ],
-      "restart": true,
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["--inspect"]
+      }
     },
     {
       "name": "Next.js: debug client-side",
@@ -92,6 +81,28 @@
         "${workspaceFolder}/**",
         "!**/node_modules/**"
       ]
+    },
+    {
+      "name": "Simple Next.js Debug",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/next",
+      "args": ["dev"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"],
+      "env": {
+        "NODE_OPTIONS": "--inspect"
+      }
+    },
+    {
+      "name": "Debug with Script",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/debug.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
     },
     {
       "name": "Debug with Chrome",
