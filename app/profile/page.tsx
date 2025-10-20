@@ -90,9 +90,11 @@ export default function ProfilePage() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(data)
-      }).then(res => {
+      }).then(async res => {
         if (!res.ok) {
-          throw new Error('Failed to update profile')
+          const errorData = await res.json()
+          console.error('API Error:', errorData)
+          throw new Error(errorData.error || 'Failed to update profile')
         }
         return res.json()
       })
@@ -113,11 +115,22 @@ export default function ProfilePage() {
 
   const handleSave = () => {
     const updateData = {
-      ...formData,
-      gpa: formData.gpa ? parseFloat(formData.gpa) : null,
-      year: formData.year || null
+      name: formData.name,
+      bio: formData.bio,
+      skills: formData.skills,
+      interests: formData.interests,
+      gpa: formData.gpa ? parseFloat(formData.gpa) : undefined,
+      year: formData.year || undefined,
+      avatar: formData.avatar
     }
-    updateProfileMutation.mutate(updateData)
+    
+    // Remove undefined values
+    const cleanedData = Object.fromEntries(
+      Object.entries(updateData).filter(([_, value]) => value !== undefined)
+    )
+    
+    console.log('Sending profile update data:', cleanedData)
+    updateProfileMutation.mutate(cleanedData)
   }
 
   const handleCancel = () => {
