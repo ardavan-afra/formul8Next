@@ -66,15 +66,16 @@ export default function CreateProjectPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.')
+    if (name.startsWith('requirements.')) {
+      const [, child] = name.split('.') as [string, keyof typeof formData.requirements]
       setFormData(prev => ({
         ...prev,
-        [parent]: {
-          ...prev[parent as keyof typeof prev],
+        requirements: {
+          ...prev.requirements,
           [child]: value
         }
       }))
+      return
     } else {
       setFormData(prev => ({
         ...prev,
