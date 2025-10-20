@@ -22,6 +22,7 @@ import {
   Tag
 } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import Navbar from '@/components/Navbar'
 import { getInitials, formatDate } from '@/lib/utils'
 
 export default function ProfilePage() {
@@ -43,7 +44,19 @@ export default function ProfilePage() {
   // Fetch user profile
   const { data: profileData, isLoading } = useQuery(
     'user-profile',
-    () => fetch('/api/users/profile').then(res => res.json()),
+    () => {
+      const token = localStorage.getItem('auth-token')
+      return fetch('/api/users/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch profile')
+        }
+        return res.json()
+      })
+    },
     { 
       enabled: !!user,
       onSuccess: (data) => {
@@ -59,24 +72,41 @@ export default function ProfilePage() {
             avatar: userData.avatar || ''
           })
         }
+      },
+      onError: (error) => {
+        console.error('Profile fetch error:', error)
       }
     }
   )
 
   // Update profile mutation
   const updateProfileMutation = useMutation(
-    (data: any) => fetch('/api/users/profile', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
-      },
-      body: JSON.stringify(data)
-    }).then(res => res.json()),
+    (data: any) => {
+      const token = localStorage.getItem('auth-token')
+      return fetch('/api/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to update profile')
+        }
+        return res.json()
+      })
+    },
     {
       onSuccess: () => {
         queryClient.invalidateQueries('user-profile')
         setIsEditing(false)
+        // Show success message
+        alert('Profile updated successfully!')
+      },
+      onError: (error) => {
+        console.error('Profile update error:', error)
+        alert('Failed to update profile. Please try again.')
       }
     }
   )
@@ -145,8 +175,10 @@ export default function ProfilePage() {
   const profile = profileData?.data?.user || user
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-white">
+        <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex justify-between items-center">
@@ -421,7 +453,8 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
