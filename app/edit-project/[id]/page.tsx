@@ -86,15 +86,40 @@ export default function EditProjectPage() {
     }
   }, [project])
 
-  const updateProjectMutation = useMutation(
-    (projectData: any) => fetch(`/api/projects/${params.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify(projectData)
-    }).then(res => res.json()),
+  const updateProjectMutation = useMutation<any, Error, any>(
+    async (projectData: any) => {
+      const response = await fetch(`/api/projects/${params.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(projectData)
+      })
+
+      let data: any = null
+      try {
+        data = await response.json()
+      } catch {
+        // Ignore JSON parse errors so we can still surface the status text.
+      }
+
+      if (!response.ok) {
+        const message =
+          (data && typeof data === 'object' && 'error' in data && typeof (data as any).error === 'string'
+            ? (data as any).error
+            : null) ||
+          (data && typeof data === 'object' && 'message' in data && typeof (data as any).message === 'string'
+            ? (data as any).message
+            : null) ||
+          response.statusText ||
+          'Failed to update project'
+
+        throw new Error(message)
+      }
+
+      return data
+    },
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['project', params.id])
@@ -107,21 +132,22 @@ export default function EditProjectPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.')
+    if (name.startsWith('requirements.')) {
+      const [, child] = name.split('.') as [string, keyof typeof formData.requirements]
       setFormData(prev => ({
         ...prev,
-        [parent]: {
-          ...prev[parent as keyof typeof prev],
+        requirements: {
+          ...prev.requirements,
           [child]: value
         }
       }))
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }))
+      return
     }
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
   }
 
   const handleArrayChange = (field: string, value: any) => {
@@ -724,9 +750,9 @@ export default function EditProjectPage() {
 
             {/* Submit */}
             <div className="card">
-              {updateProjectMutation.error && (
+              {updateProjectMutation.isError && (
                 <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4">
-                  {updateProjectMutation.error.response?.data?.message || 'Failed to update project'}
+                  {updateProjectMutation.error?.message || 'Failed to update project'}
                 </div>
               )}
 
