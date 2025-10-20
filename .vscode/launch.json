@@ -11,8 +11,9 @@
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"],
       "env": {
-        "NODE_OPTIONS": "--inspect"
-      }
+        "NODE_OPTIONS": "--inspect=0.0.0.0:9231"
+      },
+      "port": 9231
     },
     {
       "name": "Next.js: debug client-side",
@@ -72,7 +73,7 @@
       "name": "Debug with Attach",
       "type": "node",
       "request": "attach",
-      "port": 9229,
+      "port": 9232,
       "restart": true,
       "localRoot": "${workspaceFolder}",
       "remoteRoot": "${workspaceFolder}",
@@ -92,8 +93,9 @@
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"],
       "env": {
-        "NODE_OPTIONS": "--inspect"
-      }
+        "NODE_OPTIONS": "--inspect=0.0.0.0:9233"
+      },
+      "port": 9233
     },
     {
       "name": "Debug with Script",
