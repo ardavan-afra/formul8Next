@@ -5,12 +5,12 @@ const { spawn } = require('child_process');
 
 console.log('Starting Next.js with debugging enabled...');
 
-const child = spawn('node', ['--inspect=0.0.0.0:9234', 'node_modules/next/dist/bin/next', 'dev'], {
+const child = spawn('node', ['--inspect=9234', 'node_modules/next/dist/bin/next', 'dev'], {
   stdio: 'inherit',
   cwd: process.cwd(),
   env: {
     ...process.env,
-    NODE_OPTIONS: '--inspect=0.0.0.0:9234'
+    NODE_OPTIONS: '--inspect=9234'
   }
 });
 

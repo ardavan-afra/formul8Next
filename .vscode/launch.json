@@ -2,18 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Next.js: debug server-side",
+      "name": "Simple Debug (No Next.js)",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/node_modules/next/dist/bin/next",
-      "args": ["dev"],
+      "program": "${workspaceFolder}/debug-simple.js",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"],
       "env": {
-        "NODE_OPTIONS": "--inspect=0.0.0.0:9231"
-      },
-      "port": 9231
+        "NODE_OPTIONS": "--inspect"
+      }
     },
     {
       "name": "Next.js: debug client-side",
@@ -84,6 +82,16 @@
       ]
     },
     {
+      "name": "Attach to Running Server",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "restart": false,
+      "localRoot": "${workspaceFolder}",
+      "remoteRoot": "${workspaceFolder}",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
       "name": "Simple Next.js Debug",
       "type": "node",
       "request": "launch",
@@ -93,7 +101,7 @@
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"],
       "env": {
-        "NODE_OPTIONS": "--inspect=0.0.0.0:9233"
+        "NODE_OPTIONS": "--inspect=9233"
       },
       "port": 9233
     },
