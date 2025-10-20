@@ -23,13 +23,13 @@ interface ApplicationDetailModalProps {
     applicationDate: string
     responseDate?: string
     professorNotes?: string
-    student: {
-      name: string
-      email: string
-      department: string
+    student?: {
+      name?: string
+      email?: string
+      department?: string
       year?: string
       gpa?: number
-      skills: string[]
+      skills?: string[]
     }
     project: {
       title: string
@@ -101,23 +101,23 @@ export default function ApplicationDetailModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium text-gray-700">Name</p>
-                <p className="text-gray-900">{application.student.name}</p>
+                <p className="text-gray-900">{application.student?.name ?? 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-700">Email</p>
-                <p className="text-gray-900">{application.student.email}</p>
+                <p className="text-gray-900">{application.student?.email ?? 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-700">Department</p>
-                <p className="text-gray-900">{application.student.department}</p>
+                <p className="text-gray-900">{application.student?.department ?? 'N/A'}</p>
               </div>
-              {application.student.year && (
+              {application.student?.year && (
                 <div>
                   <p className="text-sm font-medium text-gray-700">Academic Year</p>
                   <p className="text-gray-900">{application.student.year}</p>
                 </div>
               )}
-              {application.student.gpa && (
+              {application.student?.gpa && (
                 <div>
                   <p className="text-sm font-medium text-gray-700">GPA</p>
                   <p className="text-gray-900">{application.student.gpa}</p>
@@ -125,7 +125,7 @@ export default function ApplicationDetailModal({
               )}
             </div>
             
-            {application.student.skills && application.student.skills.length > 0 && (
+            {application.student?.skills && application.student.skills.length > 0 && (
               <div className="mt-4">
                 <p className="text-sm font-medium text-gray-700 mb-2">Skills</p>
                 <div className="flex flex-wrap gap-2">

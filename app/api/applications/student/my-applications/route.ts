@@ -26,6 +26,17 @@ export const GET = requireRole([UserRole.student])(async (request: NextRequest, 
             email: true,
             department: true
           }
+        },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            department: true,
+            year: true,
+            gpa: true,
+            skills: true
+          }
         }
       },
       orderBy: { applicationDate: 'desc' }
