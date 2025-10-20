@@ -17,12 +17,16 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import Navbar from '@/components/Navbar'
 
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
 
   // Fetch recent projects
   const { data: projectsData, isLoading: projectsLoading } = useQuery(
     'recent-projects',
-    () => fetch('/api/projects?limit=6').then(res => res.json()),
+    () => fetch('/api/projects?limit=6', {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    }).then(res => res.json()),
     { staleTime: 5 * 60 * 1000 }
   )
 
@@ -30,14 +34,20 @@ export default function Dashboard() {
   const { data: applicationsData, isLoading: applicationsLoading } = useQuery(
     'user-applications',
     () => {
-      if (user?.role === 'student') {
-        return fetch('/api/applications/student/my-applications').then(res => res.json())
-      } else {
-        return fetch('/api/applications/professor/my-project-applications').then(res => res.json())
-      }
+      if (!user) return Promise.resolve(null)
+
+      const endpoint = user.role === 'student'
+        ? '/api/applications/student/my-applications'
+        : '/api/applications/professor/my-project-applications'
+
+      return fetch(endpoint, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      }).then(res => res.json())
     },
     { 
-      enabled: !!user,
+      enabled: !!user && !!token,
       staleTime: 2 * 60 * 1000 
     }
   )

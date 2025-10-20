@@ -169,6 +169,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json()
 
       if (response.ok) {
+        // Set cookie for server-side auth
+        const cookieParts = [
+          `auth-token=${data.data.token}`,
+          'path=/',
+          `max-age=${7 * 24 * 60 * 60}`,
+          'samesite=lax'
+        ]
+
+        if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+          cookieParts.push('secure')
+        }
+
+        document.cookie = cookieParts.join('; ')
         dispatch({ type: 'LOGIN_SUCCESS', payload: data.data })
         return { success: true }
       } else {
@@ -195,6 +208,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json()
 
       if (response.ok) {
+        // Set cookie for server-side auth
+        const cookieParts = [
+          `auth-token=${data.data.token}`,
+          'path=/',
+          `max-age=${7 * 24 * 60 * 60}`,
+          'samesite=lax'
+        ]
+
+        if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+          cookieParts.push('secure')
+        }
+
+        document.cookie = cookieParts.join('; ')
         dispatch({ type: 'REGISTER_SUCCESS', payload: data.data })
         return { success: true }
       } else {
@@ -208,6 +234,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = () => {
+    // Clear cookie
+    document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
     dispatch({ type: 'LOGOUT' })
   }
 

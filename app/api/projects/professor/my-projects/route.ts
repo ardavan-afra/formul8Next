@@ -17,6 +17,7 @@ export const GET = requireRole([UserRole.professor])(async (request: NextRequest
           }
         },
         materials: true,
+        requirements: true,
         applications: {
           include: {
             student: {

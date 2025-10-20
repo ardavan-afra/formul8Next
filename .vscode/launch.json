@@ -14,6 +14,40 @@
       }
     },
     {
+      "name": "Next.js: Debug Server Arash",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "console": "integratedTerminal",
+      "port": 9229,
+      "autoAttachChildProcesses": true,
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "name": "Next.js: Debug Client Arash",
+      "type": "msedge", // Or "chrome" if you prefer
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "name": "Next.js: Debug Full Stack Arash",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "serverReadyAction": {
+        "action": "debugWithEdge", // Or "debugWithChrome"
+        "pattern": "started server on",
+        "uriFormat": "http://localhost:%p"
+      }
+    },
+    {
       "name": "Next.js: debug client-side",
       "type": "chrome",
       "request": "launch",

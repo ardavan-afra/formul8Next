@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
-import { projectFiltersSchema, createProjectSchema } from '@/lib/validations'
+import { requireRole } from '@/lib/auth'
+import { createProjectSchema, projectFiltersSchema } from '@/lib/validations'
 import { UserRole } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -61,24 +61,23 @@ export async function GET(request: NextRequest) {
               department: true
             }
           },
-          materials: true,
           requirements: true
         },
         orderBy: { createdAt: 'desc' },
-        skip: ((validatedFilters.page || 1) - 1) * (validatedFilters.limit || 10),
-        take: validatedFilters.limit || 10
+        skip: (validatedFilters.page - 1) * validatedFilters.limit,
+        take: validatedFilters.limit
       }),
       prisma.project.count({ where })
     ])
 
-    const totalPages = Math.ceil(total / (validatedFilters.limit || 10))
+    const totalPages = Math.ceil(total / validatedFilters.limit)
 
     return NextResponse.json({
       success: true,
       data: {
         projects,
         totalPages,
-        currentPage: validatedFilters.page || 1,
+        currentPage: validatedFilters.page,
         total
       }
     })
@@ -98,35 +97,58 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const user = await getCurrentUser(request)
-  if (!user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-  }
-  if (user.role !== UserRole.professor) {
-    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-  }
-
+export const POST = requireRole([UserRole.professor])(async (request, user) => {
   try {
     const body = await request.json()
     const validatedData = createProjectSchema.parse(body)
 
-    // Extract nested objects for separate handling
-    const { requirements, materials, ...projectData } = validatedData
+    const {
+      materials,
+      requirements,
+      applicationDeadline,
+      startDate,
+      endDate,
+      skills,
+      tags,
+      maxStudents,
+      ...projectFields
+    } = validatedData
 
-    // Create project with materials
+    const hasRequirements =
+      !!requirements &&
+      (typeof requirements.gpa === 'number' ||
+        (requirements.year && requirements.year.length > 0) ||
+        (requirements.prerequisites && requirements.prerequisites.length > 0))
+
     const project = await prisma.project.create({
       data: {
-        ...projectData,
+        ...projectFields,
         professorId: user.id,
-        ...(requirements && {
-          requirements: {
-            create: requirements
-          }
-        }),
-        materials: {
-          create: materials || []
-        }
+        skills: skills ?? [],
+        tags: tags ?? [],
+        maxStudents: maxStudents ?? 1,
+        applicationDeadline: applicationDeadline ? new Date(applicationDeadline) : undefined,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
+        materials: materials && materials.length > 0
+          ? {
+              create: materials.map(material => ({
+                name: material.name,
+                type: material.type,
+                url: material.url,
+                description: material.description
+              }))
+            }
+          : undefined,
+        requirements: hasRequirements
+          ? {
+              create: {
+                gpa: requirements?.gpa,
+                year: requirements?.year ?? [],
+                prerequisites: requirements?.prerequisites ?? []
+              }
+            }
+          : undefined
       },
       include: {
         professor: {
@@ -137,14 +159,18 @@ export async function POST(request: NextRequest) {
             department: true
           }
         },
-        materials: true
+        materials: true,
+        requirements: true
       }
     })
 
-    return NextResponse.json({
-      success: true,
-      data: { project }
-    }, { status: 201 })
+    return NextResponse.json(
+      {
+        success: true,
+        data: { project }
+      },
+      { status: 201 }
+    )
   } catch (error: any) {
     if (error.name === 'ZodError') {
       return NextResponse.json(
@@ -159,4 +185,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

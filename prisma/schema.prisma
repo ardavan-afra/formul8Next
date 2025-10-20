@@ -103,7 +103,9 @@ model Project {
   professor    User           @relation(fields: [professorId], references: [id])
   applications Application[]
 
-  @@index([title, description, department, skills, tags], map: "project_search_index")
+  @@index([title, description, department], map: "project_search_index")
+  @@index([skills], map: "project_skills_index")
+  @@index([tags], map: "project_tags_index")
   @@map("projects")
 }
 

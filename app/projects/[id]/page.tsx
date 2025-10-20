@@ -1,191 +1,199 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useQuery } from 'react-query'
 import { useParams, useRouter } from 'next/navigation'
+import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { 
-  ArrowLeft, 
   Calendar, 
   Clock, 
   Users, 
   MapPin, 
   Tag, 
-  User, 
-  DollarSign,
+  User,
   FileText,
   ExternalLink,
+  ArrowLeft,
   CheckCircle,
   XCircle
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import Navbar from '@/components/Navbar'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { getStatusBadgeClass, formatDate } from '@/lib/utils'
+import ApplicationModal from '@/components/ApplicationModal'
+import { formatDate, getStatusBadgeClass } from '@/lib/utils'
 
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useAuth()
-  const [showApplicationForm, setShowApplicationForm] = useState(false)
-  const [applicationData, setApplicationData] = useState({
-    coverLetter: '',
-    relevantExperience: '',
-    motivation: ''
-  })
-
-  const projectId = params.id as string
+  const { user, token } = useAuth()
+  const queryClient = useQueryClient()
+  const [showApplicationModal, setShowApplicationModal] = useState(false)
 
   // Fetch project details
   const { data: projectData, isLoading, error } = useQuery(
-    ['project', projectId],
-    () => fetch(`/api/projects/${projectId}`).then(res => res.json()),
-    { enabled: !!projectId }
-  )
-
-  // Check if user has already applied
-  const { data: userApplications } = useQuery(
-    ['user-applications', user?.id],
-    () => fetch('/api/applications/student/my-applications').then(res => res.json()),
-    { enabled: !!user && user.role === 'student' }
+    ['project', params.id],
+    () => fetch(`/api/projects/${params.id}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    }).then(res => res.json()),
+    { enabled: !!params.id }
   )
 
   const project = projectData?.data?.project
-  const applications = userApplications?.data?.applications || []
-  const hasApplied = applications.some((app: any) => app.projectId === projectId)
 
-  const handleApplicationSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user || user.role !== 'student') return
-
-    try {
-      const response = await fetch('/api/applications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
-        },
-        body: JSON.stringify({
-          projectId,
-          ...applicationData
-        })
-      })
-
-      if (response.ok) {
-        setShowApplicationForm(false)
-        setApplicationData({ coverLetter: '', relevantExperience: '', motivation: '' })
-        // Refresh applications
-        window.location.reload()
+  // Check if user has already applied
+  const { data: applicationsData } = useQuery(
+    'user-applications',
+    () => fetch('/api/applications/student/my-applications', {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
-    } catch (error) {
-      console.error('Application submission error:', error)
+    }).then(res => res.json()),
+    { enabled: user?.role === 'student' && !!token }
+  )
+
+  const hasApplied = applicationsData?.data?.applications?.some(
+    (app: any) => app.project.id === params.id
+  )
+
+  const canApply = user?.role === 'student' && 
+    project?.status === 'active' && 
+    !hasApplied &&
+    (!project?.applicationDeadline || new Date() <= new Date(project.applicationDeadline))
+
+  const handleApply = () => {
+    if (user?.role === 'student') {
+      setShowApplicationModal(true)
+    } else {
+      router.push('/login')
     }
   }
 
-  if (isLoading) return <LoadingSpinner />
-  if (error || !project) return <div>Project not found</div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <LoadingSpinner size="lg" className="mt-20" />
+      </div>
+    )
+  }
+
+  if (error || !project) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <p className="text-red-600">Project not found or error loading project.</p>
+            <button
+              onClick={() => router.back()}
+              className="mt-4 btn-primary"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Back button */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Projects
-        </button>
+      <Navbar />
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors duration-200"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Projects</span>
+          </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main content */}
-          <div className="lg:col-span-2">
-            <div className="card">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    {project.title}
-                  </h1>
-                  <div className="flex items-center text-gray-600">
-                    <User className="h-4 w-4 mr-2" />
+          {/* Project Header */}
+          <div className="card">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {project.title}
+                </h1>
+                <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
+                  <div className="flex items-center">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    <span>{project.department}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <User className="h-4 w-4 mr-1" />
                     <span>by {project.professor.name}</span>
                   </div>
+                  <span className={`badge ${getStatusBadgeClass(project.status)}`}>
+                    {project.status}
+                  </span>
                 </div>
-                <span className={`badge ${getStatusBadgeClass(project.status)}`}>
-                  {project.status}
-                </span>
               </div>
+            </div>
 
-              <div className="prose max-w-none">
-                <h3 className="text-lg font-semibold mb-3">Description</h3>
-                <p className="text-gray-700 leading-relaxed mb-6">
-                  {project.description}
-                </p>
-              </div>
+            <p className="text-gray-700 text-lg leading-relaxed">
+              {project.description}
+            </p>
+          </div>
 
-              {/* Project details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="space-y-4">
-                  <div className="flex items-center text-gray-600">
-                    <MapPin className="h-4 w-4 mr-3" />
-                    <span className="font-medium">Department:</span>
-                    <span className="ml-2">{project.department}</span>
-                  </div>
+          {/* Project Details Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Requirements */}
+              {project.requirements && (
+                <div className="card">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
                   
-                  <div className="flex items-center text-gray-600">
-                    <Clock className="h-4 w-4 mr-3" />
-                    <span className="font-medium">Duration:</span>
-                    <span className="ml-2">{project.duration}</span>
-                  </div>
-                  
-                  <div className="flex items-center text-gray-600">
-                    <Users className="h-4 w-4 mr-3" />
-                    <span className="font-medium">Students:</span>
-                    <span className="ml-2">{project.currentStudents}/{project.maxStudents}</span>
-                  </div>
-                  
-                  <div className="flex items-center text-gray-600">
-                    <DollarSign className="h-4 w-4 mr-3" />
-                    <span className="font-medium">Compensation:</span>
-                    <span className="ml-2 capitalize">
-                      {project.compensation}
-                      {project.compensationAmount && ` - ${project.compensationAmount}`}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {project.startDate && (
-                    <div className="flex items-center text-gray-600">
-                      <Calendar className="h-4 w-4 mr-3" />
-                      <span className="font-medium">Start Date:</span>
-                      <span className="ml-2">{formatDate(project.startDate)}</span>
+                  {project.requirements.gpa && (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-700 mb-1">Minimum GPA</h3>
+                      <p className="text-gray-600">{project.requirements.gpa}</p>
                     </div>
                   )}
-                  
-                  {project.applicationDeadline && (
-                    <div className="flex items-center text-gray-600">
-                      <Calendar className="h-4 w-4 mr-3" />
-                      <span className="font-medium">Application Deadline:</span>
-                      <span className="ml-2">{formatDate(project.applicationDeadline)}</span>
+
+                  {project.requirements.year && project.requirements.year.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-700 mb-1">Academic Year</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {project.requirements.year.map((year: string, index: number) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                          >
+                            {year}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  
-                  <div className="flex items-center text-gray-600">
-                    <Clock className="h-4 w-4 mr-3" />
-                    <span className="font-medium">Time Commitment:</span>
-                    <span className="ml-2">{project.timeCommitment}</span>
-                  </div>
+
+                  {project.requirements.prerequisites && project.requirements.prerequisites.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-700 mb-1">Prerequisites</h3>
+                      <ul className="list-disc list-inside text-gray-600 space-y-1">
+                        {project.requirements.prerequisites.map((prereq: string, index: number) => (
+                          <li key={index}>{prereq}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
               {/* Skills */}
               {project.skills && project.skills.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3">Required Skills</h3>
+                <div className="card">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Required Skills</h2>
                   <div className="flex flex-wrap gap-2">
                     {project.skills.map((skill: string, index: number) => (
                       <span
                         key={index}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800"
                       >
                         {skill}
                       </span>
@@ -194,45 +202,27 @@ export default function ProjectDetailPage() {
                 </div>
               )}
 
-              {/* Tags */}
-              {project.tags && project.tags.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3">Tags</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {project.tags.map((tag: string, index: number) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                      >
-                        <Tag className="h-3 w-3 mr-1" />
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Materials */}
               {project.materials && project.materials.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3">Materials</h3>
-                  <div className="space-y-2">
+                <div className="card">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Project Materials</h2>
+                  <div className="space-y-3">
                     {project.materials.map((material: any, index: number) => (
-                      <div key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                        <FileText className="h-4 w-4 mr-3 text-gray-500" />
+                      <div key={index} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
                         <div className="flex-1">
-                          <div className="font-medium">{material.name}</div>
+                          <h4 className="text-sm font-medium text-gray-900">{material.name}</h4>
                           {material.description && (
-                            <div className="text-sm text-gray-600">{material.description}</div>
+                            <p className="text-sm text-gray-600">{material.description}</p>
                           )}
                         </div>
                         <a
                           href={material.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800"
+                          className="flex items-center space-x-1 text-primary-600 hover:text-primary-700 text-sm font-medium"
                         >
                           <ExternalLink className="h-4 w-4" />
+                          <span>Open</span>
                         </a>
                       </div>
                     ))}
@@ -240,146 +230,170 @@ export default function ProjectDetailPage() {
                 </div>
               )}
 
-              {/* Requirements */}
-              {project.requirements && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3">Requirements</h3>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    {project.requirements.gpa && (
-                      <div className="mb-2">
-                        <span className="font-medium">Minimum GPA:</span> {project.requirements.gpa}
+              {/* Applications (Professor only) */}
+              {user?.role === 'professor' && project.applications && project.applications.length > 0 && (
+                <div className="card">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Applications ({project.applications.length})</h2>
+                  <div className="space-y-3">
+                    {project.applications.slice(0, 5).map((application: any) => (
+                      <div key={application.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div>
+                          <h4 className="font-medium text-gray-900">{application.student.name}</h4>
+                          <p className="text-sm text-gray-500">{application.student.department}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`badge ${
+                            application.status === 'pending' ? 'badge-warning' :
+                            application.status === 'accepted' ? 'badge-success' :
+                            application.status === 'rejected' ? 'badge-danger' :
+                            'badge-primary'
+                          }`}>
+                            {application.status}
+                          </span>
+                          <button
+                            onClick={() => router.push('/applications')}
+                            className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                          >
+                            Review
+                          </button>
+                        </div>
                       </div>
-                    )}
-                    {project.requirements.year && project.requirements.year.length > 0 && (
-                      <div className="mb-2">
-                        <span className="font-medium">Academic Year:</span> {project.requirements.year.join(', ')}
-                      </div>
-                    )}
-                    {project.requirements.prerequisites && project.requirements.prerequisites.length > 0 && (
-                      <div>
-                        <span className="font-medium">Prerequisites:</span>
-                        <ul className="list-disc list-inside mt-1">
-                          {project.requirements.prerequisites.map((prereq: string, index: number) => (
-                            <li key={index}>{prereq}</li>
-                          ))}
-                        </ul>
-                      </div>
+                    ))}
+                    {project.applications.length > 5 && (
+                      <button
+                        onClick={() => router.push('/applications')}
+                        className="w-full text-center text-primary-600 hover:text-primary-700 font-medium py-2"
+                      >
+                        View all {project.applications.length} applications
+                      </button>
                     )}
                   </div>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Professor info */}
-            <div className="card">
-              <h3 className="text-lg font-semibold mb-4">Professor</h3>
-              <div className="space-y-2">
-                <div className="font-medium">{project.professor.name}</div>
-                <div className="text-sm text-gray-600">{project.professor.department}</div>
-                <div className="text-sm text-gray-600">{project.professor.email}</div>
-                {project.professor.bio && (
-                  <div className="text-sm text-gray-700 mt-3">
-                    {project.professor.bio}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Application section */}
-            {user?.role === 'student' && (
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Project Info */}
               <div className="card">
-                <h3 className="text-lg font-semibold mb-4">Apply to Project</h3>
-                {hasApplied ? (
-                  <div className="text-center py-4">
-                    <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-2" />
-                    <p className="text-green-600 font-medium">You have already applied to this project</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Information</h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Clock className="h-4 w-4 mr-2" />
+                    <span>{project.timeCommitment}</span>
                   </div>
-                ) : project.status === 'active' && project.currentStudents < project.maxStudents ? (
+                  
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    <span>{project.duration}</span>
+                  </div>
+                  
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Users className="h-4 w-4 mr-2" />
+                    <span>{project.currentStudents}/{project.maxStudents} students</span>
+                  </div>
+
+                  {project.startDate && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      <span>Starts {formatDate(project.startDate)}</span>
+                    </div>
+                  )}
+
+                  {project.applicationDeadline && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      <span>Apply by {formatDate(project.applicationDeadline)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Professor Info */}
+              <div className="card">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Professor</h3>
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center">
+                    <User className="h-5 w-5 text-primary-600" />
+                  </div>
                   <div>
-                    {!showApplicationForm ? (
-                      <button
-                        onClick={() => setShowApplicationForm(true)}
-                        className="btn-primary w-full"
-                      >
-                        Apply Now
-                      </button>
-                    ) : (
-                      <form onSubmit={handleApplicationSubmit} className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Cover Letter *
-                          </label>
-                          <textarea
-                            value={applicationData.coverLetter}
-                            onChange={(e) => setApplicationData(prev => ({ ...prev, coverLetter: e.target.value }))}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            rows={4}
-                            required
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Relevant Experience
-                          </label>
-                          <textarea
-                            value={applicationData.relevantExperience}
-                            onChange={(e) => setApplicationData(prev => ({ ...prev, relevantExperience: e.target.value }))}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            rows={3}
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Motivation *
-                          </label>
-                          <textarea
-                            value={applicationData.motivation}
-                            onChange={(e) => setApplicationData(prev => ({ ...prev, motivation: e.target.value }))}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            rows={3}
-                            required
-                          />
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <button
-                            type="submit"
-                            className="btn-primary flex-1"
-                          >
-                            Submit Application
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setShowApplicationForm(false)}
-                            className="btn-secondary flex-1"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </form>
-                    )}
+                    <h4 className="font-medium text-gray-900">{project.professor.name}</h4>
+                    <p className="text-sm text-gray-600">{project.professor.department}</p>
                   </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <XCircle className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600">
-                      {project.status !== 'active' 
-                        ? 'This project is not currently accepting applications'
-                        : 'This project is full'
-                      }
-                    </p>
-                  </div>
+                </div>
+                {project.professor.bio && (
+                  <p className="text-sm text-gray-600 mt-3">{project.professor.bio}</p>
                 )}
               </div>
-            )}
+
+              {/* Action Button */}
+              {user?.role === 'professor' && project.professor.id === user.id ? (
+                <div className="card">
+                  <button
+                    onClick={() => router.push(`/edit-project/${project.id}`)}
+                    className="btn-primary w-full"
+                  >
+                    Edit Project
+                  </button>
+                </div>
+              ) : canApply ? (
+                <div className="card">
+                  <button
+                    onClick={handleApply}
+                    className="btn-primary w-full flex items-center justify-center space-x-2"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Apply to Project</span>
+                  </button>
+                </div>
+              ) : hasApplied ? (
+                <div className="card">
+                  <div className="text-center">
+                    <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">You have applied to this project</p>
+                    <button
+                      onClick={() => router.push('/applications')}
+                      className="mt-2 text-primary-600 hover:text-primary-700 text-sm font-medium"
+                    >
+                      View Application
+                    </button>
+                  </div>
+                </div>
+              ) : project.status !== 'active' ? (
+                <div className="card">
+                  <div className="text-center">
+                    <XCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">This project is not accepting applications</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="card">
+                  <button
+                    onClick={() => router.push('/login')}
+                    className="btn-primary w-full"
+                  >
+                    Login to Apply
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </main>
+
+      {/* Application Modal */}
+      {showApplicationModal && (
+        <ApplicationModal
+          project={project}
+          onClose={() => setShowApplicationModal(false)}
+          onSuccess={() => {
+            setShowApplicationModal(false)
+            queryClient.invalidateQueries('user-applications')
+            router.push('/applications')
+          }}
+        />
+      )}
     </div>
   )
 }

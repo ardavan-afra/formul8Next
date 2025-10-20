@@ -5,8 +5,6 @@ import { cookies } from 'next/headers'
 import { prisma } from './db'
 import { User, UserRole } from '@prisma/client'
 
-export type SafeUser = Omit<User, 'password'>
-
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret'
 
 export interface JWTPayload {
@@ -43,13 +41,19 @@ export async function comparePassword(password: string, hashedPassword: string):
 
 export function getTokenFromRequest(request: NextRequest): string | null {
   const authHeader = request.headers.get('authorization')
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.replace('Bearer ', '')
   }
-  return authHeader.replace('Bearer ', '')
+
+  const cookieToken = request.cookies.get('auth-token')?.value
+  if (cookieToken) {
+    return cookieToken
+  }
+
+  return null
 }
 
-export async function getCurrentUser(request: NextRequest): Promise<SafeUser | null> {
+export async function getCurrentUser(request: NextRequest): Promise<User | null> {
   const token = getTokenFromRequest(request)
   if (!token) return null
 
@@ -81,19 +85,23 @@ export async function getCurrentUser(request: NextRequest): Promise<SafeUser | n
   }
 }
 
-export function requireAuth(handler: (request: NextRequest, user: SafeUser) => Promise<Response>) {
-  return async (request: NextRequest) => {
+export function requireAuth<TParams = any>(
+  handler: (request: NextRequest, user: User, context?: { params: TParams }) => Promise<Response>
+) {
+  return async (request: NextRequest, context?: { params: TParams }) => {
     const user = await getCurrentUser(request)
     if (!user) {
       return Response.json({ error: 'Authentication required' }, { status: 401 })
     }
-    return handler(request, user)
+    return handler(request, user, context)
   }
 }
 
-export function requireRole(roles: UserRole[]) {
-  return (handler: (request: NextRequest, user: SafeUser) => Promise<Response>) => {
-    return async (request: NextRequest) => {
+export function requireRole<TParams = any>(roles: UserRole[]) {
+  return (
+    handler: (request: NextRequest, user: User, context?: { params: TParams }) => Promise<Response>
+  ) => {
+    return async (request: NextRequest, context?: { params: TParams }) => {
       const user = await getCurrentUser(request)
       if (!user) {
         return Response.json({ error: 'Authentication required' }, { status: 401 })
@@ -101,13 +109,13 @@ export function requireRole(roles: UserRole[]) {
       if (!roles.includes(user.role)) {
         return Response.json({ error: 'Insufficient permissions' }, { status: 403 })
       }
-      return handler(request, user)
+      return handler(request, user, context)
     }
   }
 }
 
 // Server-side auth function for server components
-export async function getCurrentUserFromCookies(): Promise<SafeUser | null> {
+export async function getCurrentUserFromCookies(): Promise<User | null> {
   try {
     const cookieStore = cookies()
     const token = cookieStore.get('auth-token')?.value

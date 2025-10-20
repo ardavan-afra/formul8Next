@@ -1,17 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    appDir: true,
+  },
   images: {
     domains: ['localhost'],
   },
-  // Ensure proper build output for Vercel
-  output: 'standalone',
-  // Enable source maps for debugging
-  productionBrowserSourceMaps: false,
-  webpack: (config, { dev, isServer }) => {
-    if (dev) {
-      config.devtool = 'eval-source-map'
-    }
-    return config
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
 }
 
