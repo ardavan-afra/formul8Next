@@ -60,7 +60,9 @@ export async function GET(request: NextRequest) {
               email: true,
               department: true
             }
-          }
+          },
+          materials: true,
+          requirements: true
         },
         orderBy: { createdAt: 'desc' },
         skip: ((validatedFilters.page || 1) - 1) * (validatedFilters.limit || 10),
