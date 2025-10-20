@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs'
 import { NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from './db'
-import { User, UserRole } from '@prisma/client'
+import { Prisma, User, UserRole } from '@prisma/client'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret'
 
@@ -53,7 +53,25 @@ export function getTokenFromRequest(request: NextRequest): string | null {
   return null
 }
 
-export async function getCurrentUser(request: NextRequest): Promise<User | null> {
+const userSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  department: true,
+  bio: true,
+  skills: true,
+  interests: true,
+  gpa: true,
+  year: true,
+  avatar: true,
+  createdAt: true,
+  updatedAt: true
+} satisfies Prisma.UserSelect
+
+export type SafeUser = Prisma.UserGetPayload<{ select: typeof userSelect }>
+
+export async function getCurrentUser(request: NextRequest): Promise<SafeUser | null> {
   const token = getTokenFromRequest(request)
   if (!token) return null
 
@@ -63,21 +81,7 @@ export async function getCurrentUser(request: NextRequest): Promise<User | null>
   try {
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        department: true,
-        bio: true,
-        skills: true,
-        interests: true,
-        gpa: true,
-        year: true,
-        avatar: true,
-        createdAt: true,
-        updatedAt: true
-      }
+      select: userSelect
     })
     return user
   } catch (error) {
@@ -86,7 +90,7 @@ export async function getCurrentUser(request: NextRequest): Promise<User | null>
 }
 
 export function requireAuth<TParams = any>(
-  handler: (request: NextRequest, user: User, context?: { params: TParams }) => Promise<Response>
+  handler: (request: NextRequest, user: SafeUser, context?: { params: TParams }) => Promise<Response>
 ) {
   return async (request: NextRequest, context?: { params: TParams }) => {
     const user = await getCurrentUser(request)
@@ -99,7 +103,7 @@ export function requireAuth<TParams = any>(
 
 export function requireRole<TParams = any>(roles: UserRole[]) {
   return (
-    handler: (request: NextRequest, user: User, context?: { params: TParams }) => Promise<Response>
+    handler: (request: NextRequest, user: SafeUser, context?: { params: TParams }) => Promise<Response>
   ) => {
     return async (request: NextRequest, context?: { params: TParams }) => {
       const user = await getCurrentUser(request)
@@ -115,7 +119,7 @@ export function requireRole<TParams = any>(roles: UserRole[]) {
 }
 
 // Server-side auth function for server components
-export async function getCurrentUserFromCookies(): Promise<User | null> {
+export async function getCurrentUserFromCookies(): Promise<SafeUser | null> {
   try {
     const cookieStore = cookies()
     const token = cookieStore.get('auth-token')?.value
@@ -127,21 +131,7 @@ export async function getCurrentUserFromCookies(): Promise<User | null> {
 
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        department: true,
-        bio: true,
-        skills: true,
-        interests: true,
-        gpa: true,
-        year: true,
-        avatar: true,
-        createdAt: true,
-        updatedAt: true
-      }
+      select: userSelect
     })
     return user
   } catch (error) {
