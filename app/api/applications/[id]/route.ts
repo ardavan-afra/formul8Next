@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db'
 import { requireRole } from '@/lib/auth'
 import { UserRole } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 type RouteParams = { id: string }
 
 export const DELETE = requireRole<RouteParams>([UserRole.student])(

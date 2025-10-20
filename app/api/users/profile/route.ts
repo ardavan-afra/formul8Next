@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { updateProfileSchema } from '@/lib/validations'
 
+export const dynamic = 'force-dynamic'
+
 export const GET = requireAuth(async (request: NextRequest, user) => {
   try {
     return NextResponse.json({

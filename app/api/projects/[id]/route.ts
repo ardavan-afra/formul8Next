@@ -4,6 +4,8 @@ import { requireRole } from '@/lib/auth'
 import { updateProjectSchema } from '@/lib/validations'
 import { UserRole } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 type RouteParams = { id: string }
 
 export async function GET(

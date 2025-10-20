@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db'
 import { requireRole } from '@/lib/auth'
 import { UserRole } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 export const GET = requireRole([UserRole.professor])(async (request: NextRequest, user) => {
   try {
     const projects = await prisma.project.findMany({

@@ -4,6 +4,8 @@ import { requireRole } from '@/lib/auth'
 import { createApplicationSchema } from '@/lib/validations'
 import { UserRole } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 export const POST = requireRole([UserRole.student])(async (request: NextRequest, user) => {
   try {
     const body = await request.json()
