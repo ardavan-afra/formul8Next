@@ -26,15 +26,17 @@ export default function MyProjectsPage() {
   const [filter, setFilter] = useState('all')
 
   // Fetch professor's projects
+  const queryKey = ['professor-projects', user?.id]
+
   const { data: projectsData, isLoading, error } = useQuery(
-    'professor-projects',
+    queryKey,
     () => fetch('/api/projects/professor/my-projects', {
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
     }).then(res => res.json()),
     { 
-      enabled: user?.role === 'professor' && !!token,
+      enabled: user?.role === 'professor' && !!token && !!user?.id,
       staleTime: 2 * 60 * 1000 
     }
   )
@@ -49,7 +51,7 @@ export default function MyProjectsPage() {
     }),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries('professor-projects')
+        queryClient.invalidateQueries(queryKey)
         queryClient.invalidateQueries('recent-projects')
       }
     }
