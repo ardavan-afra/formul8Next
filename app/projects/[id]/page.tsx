@@ -28,6 +28,7 @@ export default function ProjectDetailPage() {
   const { user, token } = useAuth()
   const queryClient = useQueryClient()
   const [showApplicationModal, setShowApplicationModal] = useState(false)
+  const userApplicationsQueryKey = ['user-applications', user?.id, user?.role]
 
   // Fetch project details
   const { data: projectData, isLoading, error } = useQuery(
@@ -44,7 +45,7 @@ export default function ProjectDetailPage() {
 
   // Check if user has already applied
   const { data: applicationsData } = useQuery(
-    'user-applications',
+    userApplicationsQueryKey,
     () => fetch('/api/applications/student/my-applications', {
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -389,7 +390,7 @@ export default function ProjectDetailPage() {
           onClose={() => setShowApplicationModal(false)}
           onSuccess={() => {
             setShowApplicationModal(false)
-            queryClient.invalidateQueries('user-applications')
+            queryClient.invalidateQueries(['user-applications'])
             router.push('/applications')
           }}
         />

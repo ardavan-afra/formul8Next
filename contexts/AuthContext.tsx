@@ -1,7 +1,8 @@
 'use client'
 
-import React, { createContext, useContext, useReducer, useEffect } from 'react'
+import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react'
 import { User, UserRole } from '@prisma/client'
+import { useQueryClient } from 'react-query'
 
 interface AuthState {
   user: User | null
@@ -126,6 +127,19 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState)
+  const queryClient = useQueryClient()
+  const previousUserIdRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    const currentUserId = state.user?.id ?? null
+
+    if (previousUserIdRef.current !== currentUserId) {
+      if (previousUserIdRef.current !== null || currentUserId !== null) {
+        queryClient.clear()
+      }
+      previousUserIdRef.current = currentUserId
+    }
+  }, [state.user?.id, queryClient])
 
   // Load user on app start
   useEffect(() => {

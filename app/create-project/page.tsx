@@ -82,6 +82,7 @@ export default function CreateProjectPage() {
     {
       onSuccess: () => {
         queryClient.invalidateQueries('projects')
+        queryClient.invalidateQueries(['professor-projects'])
         queryClient.invalidateQueries('recent-projects')
         router.push('/my-projects')
       }

@@ -123,7 +123,7 @@ export default function EditProjectPage() {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['project', params.id])
-        queryClient.invalidateQueries('professor-projects')
+        queryClient.invalidateQueries(['professor-projects'])
         router.push('/my-projects')
       }
     }

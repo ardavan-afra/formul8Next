@@ -26,8 +26,10 @@ export default function ApplicationsPage() {
   const [filter, setFilter] = useState('all')
 
   // Fetch applications based on user role
+  const applicationsQueryKey = ['user-applications', user?.id, user?.role]
+
   const { data: applicationsData, isLoading, error } = useQuery(
-    'user-applications',
+    applicationsQueryKey,
     () => {
       if (!user || !token) return Promise.resolve(null)
 
@@ -60,7 +62,7 @@ export default function ApplicationsPage() {
       }).then(res => res.json()),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries('user-applications')
+        queryClient.invalidateQueries(['user-applications'])
         setSelectedApplication(null)
       }
     }

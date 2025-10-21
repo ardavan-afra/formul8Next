@@ -31,8 +31,10 @@ export default function Dashboard() {
   )
 
   // Fetch user's applications (for students) or project applications (for professors)
+  const applicationsQueryKey = ['user-applications', user?.id, user?.role]
+
   const { data: applicationsData, isLoading: applicationsLoading } = useQuery(
-    'user-applications',
+    applicationsQueryKey,
     () => {
       if (!user) return Promise.resolve(null)
 

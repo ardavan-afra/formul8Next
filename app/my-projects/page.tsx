@@ -51,7 +51,7 @@ export default function MyProjectsPage() {
     }),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(queryKey)
+        queryClient.invalidateQueries(['professor-projects'])
         queryClient.invalidateQueries('recent-projects')
       }
     }
