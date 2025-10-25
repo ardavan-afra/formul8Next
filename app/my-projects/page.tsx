@@ -153,7 +153,7 @@ export default function MyProjectsPage() {
               <div className="space-y-4">
                 {filteredProjects.map((project: any) => (
                   <div key={project.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-sm transition-shadow duration-200">
-                    <div className="flex items-start justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-4">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <h3 className="text-lg font-semibold text-gray-900">{project.title}</h3>
@@ -210,24 +210,24 @@ export default function MyProjectsPage() {
                         )}
                       </div>
 
-                      <div className="flex items-center space-x-2 ml-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 gap-2 sm:gap-0 sm:ml-4 w-full sm:w-auto">
                         <Link
                           href={`/projects/${project.id}`}
-                          className="btn-secondary flex items-center space-x-1"
+                          className="btn-secondary flex items-center justify-center space-x-1"
                         >
                           <Eye className="h-4 w-4" />
                           <span>View</span>
                         </Link>
                         <Link
                           href={`/edit-project/${project.id}`}
-                          className="btn-primary flex items-center space-x-1"
+                          className="btn-primary flex items-center justify-center space-x-1"
                         >
                           <Edit className="h-4 w-4" />
                           <span>Edit</span>
                         </Link>
                         <button
                           onClick={() => handleDelete(project.id)}
-                          className="btn-danger flex items-center space-x-1"
+                          className="btn-danger flex items-center justify-center space-x-1"
                           disabled={deleteProjectMutation.isLoading}
                         >
                           <Trash2 className="h-4 w-4" />

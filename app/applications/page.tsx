@@ -162,7 +162,7 @@ export default function ApplicationsPage() {
               <div className="space-y-4">
                 {filteredApplications.map((application: any) => (
                   <div key={application.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow duration-200">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <h3 className="text-lg font-medium text-gray-900">
@@ -212,27 +212,27 @@ export default function ApplicationsPage() {
                         )}
                       </div>
 
-                      <div className="flex items-center space-x-2">
+                      <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row sm:items-center sm:space-x-2 gap-2 sm:gap-0 w-full sm:w-auto">
                         <button
                           onClick={() => setSelectedApplication(application)}
-                          className="btn-secondary flex items-center space-x-1"
+                          className="btn-secondary flex items-center justify-center space-x-1"
                         >
                           <Eye className="h-4 w-4" />
                           <span>View</span>
                         </button>
 
                         {user?.role === 'professor' && application.status === 'pending' && (
-                          <div className="flex space-x-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 gap-2 sm:gap-0 w-full sm:w-auto">
                             <button
                               onClick={() => handleStatusUpdate(application.id, 'accepted')}
-                              className="btn-success flex items-center space-x-1"
+                              className="btn-success flex items-center justify-center space-x-1"
                             >
                               <Check className="h-4 w-4" />
                               <span>Accept</span>
                             </button>
                             <button
                               onClick={() => handleStatusUpdate(application.id, 'rejected')}
-                              className="btn-danger flex items-center space-x-1"
+                              className="btn-danger flex items-center justify-center space-x-1"
                             >
                               <X className="h-4 w-4" />
                               <span>Reject</span>
