@@ -72,12 +72,14 @@ export default function Navbar() {
               </>
             )}
             
-            <Link 
-              href="/applications" 
-              className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
-            >
-              Applications
-            </Link>
+            {user && (
+              <Link 
+                href="/applications" 
+                className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
+              >
+                Applications
+              </Link>
+            )}
           </div>
 
           {/* User Menu */}
@@ -158,13 +160,15 @@ export default function Navbar() {
                 </>
               )}
               
-              <Link 
-                href="/applications" 
-                className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Applications
-              </Link>
+              {user && (
+                <Link 
+                  href="/applications" 
+                  className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Applications
+                </Link>
+              )}
               
               <Link 
                 href="/profile" 
