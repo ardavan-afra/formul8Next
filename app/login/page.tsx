@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { BookOpen, Eye, EyeOff } from 'lucide-react'
@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 export default function LoginPage() {
   const { login, user, loading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -18,12 +19,23 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  const redirectTo = useMemo(() => {
+    const redirectParam = searchParams?.get('redirect') || ''
+    if (redirectParam.startsWith('/') && !redirectParam.startsWith('//')) {
+      return redirectParam
+    }
+    return '/dashboard'
+  }, [searchParams])
+  const registerHref = redirectTo !== '/dashboard'
+    ? `/register?redirect=${encodeURIComponent(redirectTo)}`
+    : '/register'
+
   // Redirect if already logged in
   useEffect(() => {
     if (user && !loading) {
-      router.push('/dashboard')
+      router.replace(redirectTo)
     }
-  }, [user, loading, router])
+  }, [user, loading, router, redirectTo])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -41,7 +53,7 @@ export default function LoginPage() {
     const result = await login(formData.email, formData.password)
     
     if (result.success) {
-      router.push('/dashboard')
+      router.replace(redirectTo)
     } else {
       setError(result.error || 'Login failed')
     }
@@ -69,7 +81,7 @@ export default function LoginPage() {
         <p className="mt-2 text-center text-sm text-gray-600">
           Or{' '}
           <Link
-            href="/register"
+            href={registerHref}
             className="font-medium text-primary-600 hover:text-primary-500"
           >
             create a new account

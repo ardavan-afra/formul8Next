@@ -51,13 +51,24 @@ export async function POST(request: NextRequest) {
     // Generate token
     const token = generateToken(user as any)
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         token,
         user
       }
     })
+
+    response.cookies.set({
+      name: 'auth-token',
+      value: token,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7
+    })
+
+    return response
   } catch (error: any) {
     if (error.name === 'ZodError') {
       return NextResponse.json(

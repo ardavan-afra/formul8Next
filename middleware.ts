@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
   const protectedRoutes = ['/dashboard', '/projects', '/applications', '/profile', '/create-project', '/my-projects', '/edit-project']
   
   // Check if the current path is protected
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+  const isProtectedRoute = protectedRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))
   
   // Check if the current path is public
   const isPublicRoute = publicRoutes.includes(pathname)
@@ -21,11 +21,18 @@ export function middleware(request: NextRequest) {
   
   // If accessing a protected route without a token, redirect to login
   if (isProtectedRoute && !token) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const loginUrl = new URL('/login', request.url)
+    const redirectPath = `${pathname}${request.nextUrl.search}`
+    loginUrl.searchParams.set('redirect', redirectPath)
+    return NextResponse.redirect(loginUrl)
   }
   
   // If accessing a public route with a token, redirect to dashboard
   if (isPublicRoute && token) {
+    const redirectParam = request.nextUrl.searchParams.get('redirect')
+    if (redirectParam && redirectParam.startsWith('/')) {
+      return NextResponse.redirect(new URL(redirectParam, request.url))
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
   

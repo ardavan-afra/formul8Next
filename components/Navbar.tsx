@@ -21,6 +21,27 @@ export default function Navbar() {
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const homeHref = user ? '/dashboard' : '/'
+
+  const browseHref = '/projects'
+
+  const handleBrowseClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!user) {
+      event.preventDefault()
+      setIsMenuOpen(false)
+      router.push(`/login?redirect=${encodeURIComponent(browseHref)}`)
+    }
+  }
+
+  const handleMobileBrowseClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!user) {
+      event.preventDefault()
+      setIsMenuOpen(false)
+      router.push(`/login?redirect=${encodeURIComponent(browseHref)}`)
+    } else {
+      setIsMenuOpen(false)
+    }
+  }
 
   const handleLogout = () => {
     logout()
@@ -40,7 +61,7 @@ export default function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center space-x-2">
+          <Link href={homeHref} className="flex items-center space-x-2">
             <BookOpen className="h-8 w-8 text-primary-600" />
             <span className="text-xl font-bold text-gray-900">Formul8</span>
           </Link>
@@ -48,8 +69,9 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <Link 
-              href="/projects" 
+              href={browseHref} 
               className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
+              onClick={handleBrowseClick}
             >
               Browse Projects
             </Link>
@@ -84,37 +106,54 @@ export default function Navbar() {
 
           {/* User Menu */}
           <div className="hidden md:flex items-center space-x-4">
-            <div className="relative">
-              <button
-                onClick={toggleProfile}
-                className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors duration-200"
-              >
-                <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-primary-600" />
-                </div>
-                <span className="text-sm font-medium">{user?.name}</span>
-              </button>
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={toggleProfile}
+                  className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors duration-200"
+                >
+                  <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center">
+                    <User className="h-4 w-4 text-primary-600" />
+                  </div>
+                  <span className="text-sm font-medium">{user.name}</span>
+                </button>
 
-              {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  <Link
-                    href="/profile"
-                    className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    onClick={() => setIsProfileOpen(false)}
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Profile Settings</span>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              )}
-            </div>
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                    <Link
+                      href="/profile"
+                      className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <Settings className="h-4 w-4" />
+                      <span>Profile Settings</span>
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-semibold text-gray-700 hover:text-primary-600 transition-colors duration-200"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-primary-700"
+                >
+                  Create account
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -133,9 +172,9 @@ export default function Navbar() {
           <div className="md:hidden border-t border-gray-200 py-4">
             <div className="flex flex-col space-y-4">
               <Link 
-                href="/projects" 
+                href={browseHref} 
                 className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={handleMobileBrowseClick}
               >
                 Browse Projects
               </Link>
@@ -160,32 +199,49 @@ export default function Navbar() {
                 </>
               )}
               
-              {user && (
-                <Link 
-                  href="/applications" 
-                  className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Applications
-                </Link>
+              {user ? (
+                <>
+                  <Link 
+                    href="/applications" 
+                    className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Applications
+                  </Link>
+                  <Link 
+                    href="/profile" 
+                    className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Profile Settings</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors duration-200"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Create account
+                  </Link>
+                </>
               )}
-              
-              <Link 
-                href="/profile" 
-                className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Settings className="h-4 w-4" />
-                <span>Profile Settings</span>
-              </Link>
-              
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors duration-200"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </button>
             </div>
           </div>
         )}

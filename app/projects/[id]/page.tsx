@@ -29,6 +29,8 @@ export default function ProjectDetailPage() {
   const queryClient = useQueryClient()
   const [showApplicationModal, setShowApplicationModal] = useState(false)
   const userApplicationsQueryKey = ['user-applications', user?.id, user?.role]
+  const projectId = Array.isArray(params?.id) ? params?.id[0] : params?.id
+  const projectPath = projectId ? `/projects/${projectId}` : '/projects'
 
   // Fetch project details
   const { data: projectData, isLoading, error } = useQuery(
@@ -67,7 +69,7 @@ export default function ProjectDetailPage() {
     if (user?.role === 'student') {
       setShowApplicationModal(true)
     } else {
-      router.push('/login')
+      router.push(`/login?redirect=${encodeURIComponent(projectPath)}`)
     }
   }
 
@@ -371,7 +373,7 @@ export default function ProjectDetailPage() {
               ) : (
                 <div className="card">
                   <button
-                    onClick={() => router.push('/login')}
+                    onClick={() => router.push(`/login?redirect=${encodeURIComponent(projectPath)}`)}
                     className="btn-primary w-full"
                   >
                     Login to Apply

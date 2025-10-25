@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { BookOpen, Eye, EyeOff, Plus, X } from 'lucide-react'
@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 export default function RegisterPage() {
   const { register, user, loading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,13 +28,23 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [newSkill, setNewSkill] = useState('')
   const [newInterest, setNewInterest] = useState('')
+  const redirectTo = useMemo(() => {
+    const redirectParam = searchParams?.get('redirect') || ''
+    if (redirectParam.startsWith('/') && !redirectParam.startsWith('//')) {
+      return redirectParam
+    }
+    return '/dashboard'
+  }, [searchParams])
+  const loginHref = redirectTo !== '/dashboard'
+    ? `/login?redirect=${encodeURIComponent(redirectTo)}`
+    : '/login'
 
   // Redirect if already logged in
   useEffect(() => {
     if (user && !loading) {
-      router.push('/dashboard')
+      router.replace(redirectTo)
     }
-  }, [user, loading, router])
+  }, [user, loading, router, redirectTo])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
@@ -91,7 +102,7 @@ export default function RegisterPage() {
     const result = await register(submitData)
     
     if (result.success) {
-      router.push('/dashboard')
+      router.replace(redirectTo)
     } else {
       setError(result.error || 'Registration failed')
     }
@@ -119,7 +130,7 @@ export default function RegisterPage() {
         <p className="mt-2 text-center text-sm text-gray-600">
           Or{' '}
           <Link
-            href="/login"
+            href={loginHref}
             className="font-medium text-primary-600 hover:text-primary-500"
           >
             sign in to your existing account

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, usePathname } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Save, X, Plus, ArrowLeft } from 'lucide-react'
 import Navbar from '@/components/Navbar'
@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext'
 export default function EditProjectPage() {
   const params = useParams()
   const router = useRouter()
+  const pathname = usePathname()
   const queryClient = useQueryClient()
   const { token } = useAuth()
   
@@ -234,7 +235,8 @@ export default function EditProjectPage() {
     e.preventDefault()
     
     if (!token) {
-      router.push('/login')
+      const redirect = pathname || (params?.id ? `/edit-project/${Array.isArray(params.id) ? params.id[0] : params.id}` : '/dashboard')
+      router.push(`/login?redirect=${encodeURIComponent(redirect)}`)
       return
     }
     

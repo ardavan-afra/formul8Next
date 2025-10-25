@@ -198,45 +198,43 @@ export default function ProjectsPage() {
               <div className="flex flex-wrap gap-2 mt-4">
                 {searchTerm && (
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800">
-                    Search: "{searchTerm}"
+                    Search: {searchTerm}
                     <button
+                      className="ml-2 text-primary-600 hover:text-primary-700"
                       onClick={() => setSearchTerm('')}
-                      className="ml-2 hover:text-primary-600"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
                 )}
                 {filters.department && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    {filters.department}
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800">
+                    Department: {filters.department}
                     <button
+                      className="ml-2 text-primary-600 hover:text-primary-700"
                       onClick={() => handleFilterChange('department', '')}
-                      className="ml-2 hover:text-gray-600"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
                 )}
                 {filters.skills && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800">
-                    <Tag className="h-3 w-3 mr-1" />
-                    {filters.skills}
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800">
+                    Skill: {filters.skills}
                     <button
+                      className="ml-2 text-primary-600 hover:text-primary-700"
                       onClick={() => handleFilterChange('skills', '')}
-                      className="ml-2 hover:text-gray-600"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
                 )}
                 {filters.status !== 'active' && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800">
                     Status: {filters.status}
                     <button
+                      className="ml-2 text-primary-600 hover:text-primary-700"
                       onClick={() => handleFilterChange('status', 'active')}
-                      className="ml-2 hover:text-gray-600"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -246,80 +244,57 @@ export default function ProjectsPage() {
             )}
           </div>
 
-          {/* Results */}
+          {/* Projects List */}
           <div className="card">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {isLoading ? 'Loading...' : `${total} project${total !== 1 ? 's' : ''} found`}
-              </h2>
-            </div>
-
             {isLoading ? (
-              <LoadingSpinner size="lg" className="py-12" />
+              <div className="py-12">
+                <LoadingSpinner size="lg" className="mx-auto" />
+              </div>
             ) : error ? (
-              <div className="text-center py-12">
+              <div className="py-12 text-center">
                 <p className="text-red-600">Error loading projects. Please try again.</p>
               </div>
             ) : projects.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {projects.map((project: any) => (
-                    <ProjectCard key={project.id} project={project} />
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center space-x-2 mt-8">
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                      className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Previous
-                    </button>
-                    
-                    <div className="flex space-x-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        const pageNum = i + 1
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => setCurrentPage(pageNum)}
-                            className={`px-3 py-2 text-sm font-medium rounded-lg ${
-                              currentPage === pageNum
-                                ? 'bg-primary-600 text-white'
-                                : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                      className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {projects.map((project: any) => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
+              </div>
             ) : (
-              <div className="text-center py-12">
+              <div className="py-12 text-center">
                 <p className="text-gray-500">No projects found matching your criteria.</p>
-                <button
-                  onClick={clearFilters}
-                  className="mt-2 text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  Clear filters to see all projects
-                </button>
               </div>
             )}
           </div>
+
+          {/* Pagination */}
+          {projects.length > 0 && (
+            <div className="card flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-gray-600 mb-4 sm:mb-0">
+                Showing {(currentPage - 1) * 12 + Math.min(projects.length, 12)} of {total} projects
+              </p>
+
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 rounded-md border border-gray-200 text-sm text-gray-700 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 rounded-md border border-gray-200 text-sm text-gray-700 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useMutation, useQueryClient } from 'react-query'
 import { Plus, X, Upload } from 'lucide-react'
 import Navbar from '@/components/Navbar'
@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext'
 
 export default function CreateProjectPage() {
   const router = useRouter()
+  const pathname = usePathname()
   const queryClient = useQueryClient()
   const { token } = useAuth()
   
@@ -194,7 +195,8 @@ export default function CreateProjectPage() {
     e.preventDefault()
     
     if (!token) {
-      router.push('/login')
+      const redirect = pathname || '/create-project'
+      router.push(`/login?redirect=${encodeURIComponent(redirect)}`)
       return
     }
     

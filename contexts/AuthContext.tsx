@@ -177,6 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ email, password })
       })
 
@@ -216,6 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(userData)
       })
 
@@ -249,7 +251,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     // Clear cookie
-    document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    const cookieParts = [
+      'auth-token=;',
+      'path=/',
+      'expires=Thu, 01 Jan 1970 00:00:00 GMT',
+      'samesite=lax'
+    ]
+
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+      cookieParts.push('secure')
+    }
+
+    document.cookie = cookieParts.join('; ')
     dispatch({ type: 'LOGOUT' })
   }
 
