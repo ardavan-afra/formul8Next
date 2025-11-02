@@ -70,6 +70,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-8">
             <Link 
               href={browseHref} 
+              prefetch={!!user}
               className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
               onClick={handleBrowseClick}
             >
@@ -173,6 +174,7 @@ export default function Navbar() {
             <div className="flex flex-col space-y-4">
               <Link 
                 href={browseHref} 
+                prefetch={!!user}
                 className="text-gray-600 hover:text-primary-600 transition-colors duration-200"
                 onClick={handleMobileBrowseClick}
               >
