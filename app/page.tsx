@@ -27,7 +27,7 @@ export default async function HomePage() {
               Students gain a streamlined way to discover projects, submit applications, and track participation.
             </p>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <Link
                 href={user ? '/dashboard' : '/login'}
                 className="inline-flex items-center justify-center rounded-md bg-primary-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
@@ -153,6 +154,20 @@ export default function Navbar() {
                 >
                   Create account
                 </Link>
+                <a
+                  href="https://github.com/ardavan-afra/formul8Next"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white p-2.5 text-gray-600 shadow-sm transition-colors duration-200 hover:border-primary-300 hover:text-primary-700"
+                  aria-label="View source on GitHub"
+                >
+                  <Image
+                    src="/icons/github-mark.svg"
+                    alt="GitHub"
+                    width={18}
+                    height={18}
+                  />
+                </a>
               </>
             )}
           </div>
@@ -242,6 +257,22 @@ export default function Navbar() {
                   >
                     Create account
                   </Link>
+                  <a
+                    href="https://github.com/ardavan-afra/formul8Next"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                    aria-label="View source on GitHub"
+                  >
+                    <Image
+                      src="/icons/github-mark.svg"
+                      alt="GitHub"
+                      width={18}
+                      height={18}
+                    />
+                    <span>GitHub</span>
+                  </a>
                 </>
               )}
             </div>
